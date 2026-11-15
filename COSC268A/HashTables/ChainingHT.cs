@@ -1,10 +1,7 @@
-﻿using System;
+﻿using Lists;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Lists;
 
 namespace HashTables;
 
@@ -48,10 +45,11 @@ public class ChainingHT<K, V> : A_HashTable<K, V> where K : IComparable<K>
             oDataArray[iHash] = alCurrent;
             // Keep track of how many buckets have something:
             iBucketCount++;
-        } else
+        }
+        else
         {
             // If there is an array list, grab it and cast it:
-            alCurrent = (Array_List<KeyValue<K,V>>)oDataArray[iHash];
+            alCurrent = (Array_List<KeyValue<K, V>>)oDataArray[iHash];
             // We should double check our key isn't already in the list
             // because we should not allow duplicates in a hashtable:
             if (alCurrent.Contains(keyValue))
@@ -110,8 +108,8 @@ public class ChainingHT<K, V> : A_HashTable<K, V> where K : IComparable<K>
             if (oOldDataArray[i] != null)
             {
                 // If there is an Array_list, I'll grab it, cast it, and go through it:
-                Array_List<KeyValue<K, V>> alCurrent = (Array_List<KeyValue<K,V>>)oOldDataArray[i];
-                foreach (KeyValue<K,V> kv in alCurrent)
+                Array_List<KeyValue<K, V>> alCurrent = (Array_List<KeyValue<K, V>>)oOldDataArray[i];
+                foreach (KeyValue<K, V> kv in alCurrent)
                 {
                     // Just use the Add method to add it to our table:
                     Add(kv.Key, kv.Value);
@@ -131,7 +129,7 @@ public class ChainingHT<K, V> : A_HashTable<K, V> where K : IComparable<K>
 
     public override IEnumerator<V> GetEnumerator()
     {
-        throw new NotImplementedException();
+        return new ChainingHTEnumerator(this);
     }
 
     public override V Get(K key)
@@ -141,7 +139,7 @@ public class ChainingHT<K, V> : A_HashTable<K, V> where K : IComparable<K>
         int iHash = HashFunction(key);
 
         // We'll grab the ArrayList from that slot in the table
-        Array_List<KeyValue<K,V>> alCurrent = (Array_List<KeyValue<K,V>>)oDataArray[iHash];
+        Array_List<KeyValue<K, V>> alCurrent = (Array_List<KeyValue<K, V>>)oDataArray[iHash];
 
         // It may or may not be in that array list, so we may want to keep track
         // of whether we find it in the arraylist
@@ -149,10 +147,10 @@ public class ChainingHT<K, V> : A_HashTable<K, V> where K : IComparable<K>
 
         // If the arraylist isn't null (so that bucket in the hashtable wasn't empty)
         if (alCurrent != null)
-        { 
+        {
             // Search through the arraylist for the KeyValue pair where
             // the key matches the key we are looking for
-            foreach (KeyValue<K,V> kv in alCurrent)
+            foreach (KeyValue<K, V> kv in alCurrent)
             {
                 // If we find the key value pair we are looking for,
                 if (kv.Key.Equals(key))
@@ -172,7 +170,7 @@ public class ChainingHT<K, V> : A_HashTable<K, V> where K : IComparable<K>
         {
             throw new ApplicationException("Could not find key " + key + " in hashtable.");
         }
-        
+
         // Otherwise, return the Value corresponding to the key
         return vReturn;
     }
@@ -188,7 +186,7 @@ public class ChainingHT<K, V> : A_HashTable<K, V> where K : IComparable<K>
         Array_List<KeyValue<K, V>> alCurrent = (Array_List<KeyValue<K, V>>)oDataArray[iHashLocation];
 
         // If the arraylist exists:
-        if (alCurrent != null) 
+        if (alCurrent != null)
         {
             // Go through the arraylist element by element looking for the item:
             for (int i = 0; i < alCurrent.Count; i++)
@@ -220,5 +218,83 @@ public class ChainingHT<K, V> : A_HashTable<K, V> where K : IComparable<K>
 
         // If we did, return the value of the keyvalue pair we found
         return kvRemoved.Value;
+    }
+
+    private class ChainingHTEnumerator : IEnumerator<V>
+    {
+        private ChainingHT<K, V> table;
+        private Array_List<KeyValue<K, V>> bucket;
+
+        // Keep a reference to the indexes we've most recently visited:
+        private int index, bucketIndex;
+
+
+        public ChainingHTEnumerator(ChainingHT<K, V> table)
+        {
+            this.table = table;
+            Reset();
+        }
+
+        public V Current
+        {
+            get
+            {
+                return bucket.ElementAt(bucketIndex).Value;
+            }
+        }
+
+        object IEnumerator.Current => Current;
+
+        public void Dispose()
+        {
+            table = null;
+            index = -1;
+            bucketIndex = -1;
+
+
+        }
+
+        public bool MoveNext()
+        {
+            // first check if we are currently inside a bucket
+            if (bucket is not null)
+            {
+                if (bucketIndex + 1 < bucket.Count)
+                {
+                    bucketIndex++;
+                    return true;
+                }
+                else
+                {
+                    bucket = null;
+                    bucketIndex = -1;
+                }
+            }
+
+            // then check if the table has been fully traversed. if it hasn't been then advance until we hit another bucket
+            // or we go off the edge. 
+            while (index < table.oDataArray.Length - 1 && bucket is null)
+            {
+                index++;
+                //check if there is a bucket
+                if (table.oDataArray[index] is not null)
+                {
+                    bucket = (Array_List<KeyValue<K, V>>)table.oDataArray[index];
+                    bucketIndex++;
+                    return true;
+                }
+            }
+            //then if we pass both of those checks we return false
+
+            return false;
+        }
+
+        // reset variables so we can enumerate the table again
+        public void Reset()
+        {
+            index = -1;
+            bucketIndex = -1;
+            bucket = null;
+        }
     }
 }

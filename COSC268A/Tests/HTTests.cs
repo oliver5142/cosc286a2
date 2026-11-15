@@ -1,8 +1,8 @@
-﻿using System;
+﻿using HashTables;
+using Lists;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using HashTables;
-using Lists;
 
 namespace HTTests;
 
@@ -200,7 +200,7 @@ public class HashTableSpeedTests
 {
 
     Array_List<Person> peopleAL =
-        loadPeopleFromFile(@"C:\Users\lahodaa.SIAST\Downloads\tenthousandpeople.csv");
+        loadPeopleFromFile(@"C:\Users\Dustin School\Downloads\tenthousandpeople.csv");
 
     ChainingHT<Person, Person> personCHT;
 
@@ -213,7 +213,7 @@ public class HashTableSpeedTests
     [Test]
     public void TestDoubleHTAddAndGetSpeed()
     {
-        DoubleHT<Person,Person> personDHT = new DoubleHT<Person, Person>();
+        DoubleHT<Person, Person> personDHT = new DoubleHT<Person, Person>();
         addLotsOfPeopleToHT(personDHT);
         getLotsOfPeopleToHT(personDHT);
     }
@@ -278,7 +278,7 @@ public class HashTableSpeedTests
     public void TestLoadPeopleFromFile()
     {
         Array_List<Person> persons =
-            loadPeopleFromFile(@"C:\Users\lahodaa.SIAST\Downloads\tenthousandpeople.csv");
+            loadPeopleFromFile(@"C:\Users\Dustin School\Downloads\tenthousandpeople.csv");
         foreach (Person person in persons)
         {
             Console.WriteLine(person.ToString());

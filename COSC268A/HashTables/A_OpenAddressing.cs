@@ -1,8 +1,6 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HashTables;
 
@@ -29,20 +27,20 @@ public abstract class A_OpenAddressing<K, V> : A_HashTable<K, V> where K : IComp
         // Grab the initial hashtable location:
         int iInitialHashLocation = HashFunction(key);
         // Wrap up the key and value we're given into a KeyValue pair:
-        KeyValue<K,V> kv = new KeyValue<K,V>(key, value);
+        KeyValue<K, V> kv = new KeyValue<K, V>(key, value);
         // I'm going to keep track of our current position in the hashtable
         //   which will start the same as the initial position:
-        int iCurrentLocation = iInitialHashLocation;      
+        int iCurrentLocation = iInitialHashLocation;
 
         // Keep to checking in the hashtable according to our probe sequence
         // until we find a null (an empty slot) in our table:
         while (oDataArray[iCurrentLocation] != null)
         {
             // Check for duplicate key - if we find a dupe throw an exception:
-            if (oDataArray[iCurrentLocation].GetType() == typeof(KeyValue<K,V>))
+            if (oDataArray[iCurrentLocation].GetType() == typeof(KeyValue<K, V>))
             {
                 // I'll need to cast the object to KeyValue:
-                KeyValue<K,V> kvInBucket = (KeyValue<K,V>)oDataArray[iCurrentLocation];
+                KeyValue<K, V> kvInBucket = (KeyValue<K, V>)oDataArray[iCurrentLocation];
                 // Check if the keys are equal - if they are, we've got a duplicate:
                 if (kvInBucket.Equals(kv))
                 {
@@ -53,7 +51,7 @@ public abstract class A_OpenAddressing<K, V> : A_HashTable<K, V> where K : IComp
             // to look at the next bucket indicated by GetIncrement:
             iCurrentLocation = iInitialHashLocation + GetIncrement(iAttempt++, key);
             // If we fall off the bottom of the table, loop back to the top using mod
-            iCurrentLocation %= HTSize;         
+            iCurrentLocation %= HTSize;
             // This counts as a collision, so make sure to increase the collision count:
             iNumCollisions++;
         }
@@ -89,9 +87,9 @@ public abstract class A_OpenAddressing<K, V> : A_HashTable<K, V> where K : IComp
 
         foreach (object o in oOldDataArray)
         {
-            if (o != null && o.GetType() == typeof(KeyValue<K,V>))
+            if (o != null && o.GetType() == typeof(KeyValue<K, V>))
             {
-                KeyValue<K,V> kv = (KeyValue<K,V>)o;
+                KeyValue<K, V> kv = (KeyValue<K, V>)o;
                 Add(kv.Key, kv.Value);
             }
         }
@@ -126,9 +124,9 @@ public abstract class A_OpenAddressing<K, V> : A_HashTable<K, V> where K : IComp
         // Keep looping until either we find the tiem or we hit a null:
         while (!bFound && oDataArray[iCurrentLocation] != null)
         {
-            if (oDataArray[iCurrentLocation].GetType() == typeof(KeyValue<K,V>))
+            if (oDataArray[iCurrentLocation].GetType() == typeof(KeyValue<K, V>))
             {
-                KeyValue<K,V> kv = (KeyValue<K,V>)oDataArray[iCurrentLocation];
+                KeyValue<K, V> kv = (KeyValue<K, V>)oDataArray[iCurrentLocation];
                 if (kv.Key.Equals(key))
                 {
                     // If the keys match we've found the item:
@@ -163,7 +161,7 @@ public abstract class A_OpenAddressing<K, V> : A_HashTable<K, V> where K : IComp
 
     public override IEnumerator<V> GetEnumerator()
     {
-        throw new NotImplementedException();
+        return new OpenAddressEnumerator(this);
     }
 
     public override V Remove(K key)
@@ -215,5 +213,50 @@ public abstract class A_OpenAddressing<K, V> : A_HashTable<K, V> where K : IComp
     internal class Tombstone
     {
 
+    }
+
+    private class OpenAddressEnumerator : IEnumerator<V>
+    {
+        private A_OpenAddressing<K, V> table;
+
+        // Keep a reference to the Node we've most recently visited:
+        private int index;
+
+
+        public OpenAddressEnumerator(A_OpenAddressing<K, V> table)
+        {
+            this.table = table;
+            Reset();
+        }
+
+        public V Current => ((KeyValue<K, V>)table.oDataArray[index]).Value;
+
+        object IEnumerator.Current => Current;
+
+        public void Dispose()
+        {
+            table = null;
+            index = -1;
+
+        }
+
+        public bool MoveNext()
+        {
+            index++;
+            //we must move until we hit a KV or exceed the length of the Array
+            while (index < table.oDataArray.Length && !(table.oDataArray[index] is KeyValue<K, V>))
+            {
+                index++;
+            }
+            // if index is greater than length we have exceeded the size of the array and cannot move anymore
+            return index < table.oDataArray.Length;
+        }
+
+        public void Reset()
+        {
+            // Like in the array_list enum, set the enum to be looking before the start of the collection
+            index = -1;
+
+        }
     }
 }
