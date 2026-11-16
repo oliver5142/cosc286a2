@@ -108,6 +108,94 @@ public class ChainingHTTests
     }
 }
 
+public class ChainingBSTTests
+{
+    [Test]
+    public void TestAddAndGetAndClear()
+    {
+        ChainingBST<int, string> intStringHT = new ChainingBST<int, string>();
+        Assert.AreEqual(0, intStringHT.Count);
+
+        intStringHT.Add(0, "Zero");
+        intStringHT.Add(1, "One");
+        intStringHT.Add(2, "Two");
+        intStringHT.Add(3, "Three");
+        intStringHT.Add(4, "Four");
+        Assert.AreEqual(5, intStringHT.Count);
+
+        Assert.AreEqual("Zero", intStringHT.Get(0));
+        Assert.AreEqual("One", intStringHT.Get(1));
+        Assert.AreEqual("Two", intStringHT.Get(2));
+        Assert.AreEqual("Three", intStringHT.Get(3));
+        Assert.AreEqual("Four", intStringHT.Get(4));
+
+        Assert.Throws<ApplicationException>(() => intStringHT.Get(9999));
+
+        intStringHT.Clear();
+        Assert.AreEqual(0, intStringHT.Count);
+        Assert.Throws<ApplicationException>(() => intStringHT.Get(1));
+    }
+
+    [Test]
+    public void TestRemove()
+    {
+        ChainingBST<int, string> intStringHT = new ChainingBST<int, string>();
+        Assert.AreEqual(0, intStringHT.Count);
+
+        intStringHT.Add(0, "Zero");
+        intStringHT.Add(1, "One");
+        intStringHT.Add(2, "Two");
+        intStringHT.Add(3, "Three");
+        intStringHT.Add(4, "Four");
+        Assert.AreEqual(5, intStringHT.Count);
+
+        Assert.AreEqual("Four", intStringHT.Remove(4));
+        Assert.AreEqual(4, intStringHT.Count);
+        Assert.AreEqual("Zero", intStringHT.Remove(0));
+        Assert.AreEqual(3, intStringHT.Count);
+        Assert.Throws<ApplicationException>(() => intStringHT.Remove(9999));
+
+        Assert.AreEqual("One", intStringHT.Get(1));
+        Assert.AreEqual("Two", intStringHT.Get(2));
+        Assert.AreEqual("Three", intStringHT.Get(3));
+        Assert.Throws<ApplicationException>(() => intStringHT.Get(0));
+        Assert.Throws<ApplicationException>(() => intStringHT.Get(4));
+    }
+
+    [Test]
+    public void TestEnumerator()
+    {
+        ChainingBST<int, Person> cht = new ChainingBST<int, Person>();
+        Array_List<Person> alPeople = new Array_List<Person>();
+        alPeople.Add(new Person(111, "Ada", "Ace", "ada.ace@gmail.com"));
+        alPeople.Add(new Person(222, "Bill", "Bee", "bill.bee@gmail.com"));
+        alPeople.Add(new Person(333, "Cat", "Cee", "cat.cee@gmail.com"));
+        alPeople.Add(new Person(444, "Dirk", "Dee", "dirk.dee@outlook.com"));
+        alPeople.Add(new Person(555, "Ed", "Eee", "ed.eee@saskpolytech.ca"));
+        alPeople.Add(new Person(666, "Fred", "Fee", "Fred.Fee@gmail.com"));
+
+        Array_List<int> alSINS = new Array_List<int>();
+        foreach (Person person in alPeople)
+        {
+            cht.Add(person.SIN, person);
+            alSINS.Add(person.SIN);
+        }
+
+        // Now check the enumerator:
+        IEnumerator<Person> myEnum = cht.GetEnumerator();
+        myEnum.Reset();
+        while (myEnum.MoveNext())
+        {
+            Person p = myEnum.Current;
+            // Remove it from our list of SINS - it should be in the list!
+            Assert.IsTrue(alSINS.Remove(p.SIN));
+        }
+
+        // Once we're done, we should have found every SIN:
+        Assert.AreEqual(0, alSINS.Count);
+    }
+}
+
 public class LinearHTTests
 {
     [Test]
