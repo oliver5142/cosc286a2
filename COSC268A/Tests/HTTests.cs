@@ -113,53 +113,60 @@ public class ChainingBSTTests
     [Test]
     public void TestAddAndGetAndClear()
     {
-        ChainingBST<int, string> intStringHT = new ChainingBST<int, string>();
-        Assert.AreEqual(0, intStringHT.Count);
+        ChainingBST<int, string> intStringBST = new ChainingBST<int, string>();
+        Assert.AreEqual(0, intStringBST.Count);
 
-        intStringHT.Add(0, "Zero");
-        intStringHT.Add(1, "One");
-        intStringHT.Add(2, "Two");
-        intStringHT.Add(3, "Three");
-        intStringHT.Add(4, "Four");
-        Assert.AreEqual(5, intStringHT.Count);
+        intStringBST.Add(0, "Zero");
+        intStringBST.Add(1, "One");
 
-        Assert.AreEqual("Zero", intStringHT.Get(0));
-        Assert.AreEqual("One", intStringHT.Get(1));
-        Assert.AreEqual("Two", intStringHT.Get(2));
-        Assert.AreEqual("Three", intStringHT.Get(3));
-        Assert.AreEqual("Four", intStringHT.Get(4));
 
-        Assert.Throws<ApplicationException>(() => intStringHT.Get(9999));
+        intStringBST.Add(2, "Two");
+        intStringBST.Add(3, "Three");
+        intStringBST.Add(4, "Four");
+        Assert.AreEqual(5, intStringBST.Count);
+        intStringBST.Add(5, "Five");
+        intStringBST.Add(10, "Ten");
+        // Count should be 7 but bucket count will be 6 since Five and Ten are in the same bucket
+        Assert.AreEqual(7, intStringBST.Count);
+        Assert.AreEqual(6, intStringBST.getBucketCount());
 
-        intStringHT.Clear();
-        Assert.AreEqual(0, intStringHT.Count);
-        Assert.Throws<ApplicationException>(() => intStringHT.Get(1));
+        Assert.AreEqual("Zero", intStringBST.Get(0));
+        Assert.AreEqual("One", intStringBST.Get(1));
+        Assert.AreEqual("Two", intStringBST.Get(2));
+        Assert.AreEqual("Three", intStringBST.Get(3));
+        Assert.AreEqual("Four", intStringBST.Get(4));
+
+        Assert.Throws<ApplicationException>(() => intStringBST.Get(9999));
+
+        intStringBST.Clear();
+        Assert.AreEqual(0, intStringBST.Count);
+        Assert.Throws<ApplicationException>(() => intStringBST.Get(1));
     }
 
     [Test]
     public void TestRemove()
     {
-        ChainingBST<int, string> intStringHT = new ChainingBST<int, string>();
-        Assert.AreEqual(0, intStringHT.Count);
+        ChainingBST<int, string> intStringBST = new ChainingBST<int, string>();
+        Assert.AreEqual(0, intStringBST.Count);
 
-        intStringHT.Add(0, "Zero");
-        intStringHT.Add(1, "One");
-        intStringHT.Add(2, "Two");
-        intStringHT.Add(3, "Three");
-        intStringHT.Add(4, "Four");
-        Assert.AreEqual(5, intStringHT.Count);
+        intStringBST.Add(0, "Zero");
+        intStringBST.Add(1, "One");
+        intStringBST.Add(2, "Two");
+        intStringBST.Add(3, "Three");
+        intStringBST.Add(4, "Four");
+        Assert.AreEqual(5, intStringBST.Count);
 
-        Assert.AreEqual("Four", intStringHT.Remove(4));
-        Assert.AreEqual(4, intStringHT.Count);
-        Assert.AreEqual("Zero", intStringHT.Remove(0));
-        Assert.AreEqual(3, intStringHT.Count);
-        Assert.Throws<ApplicationException>(() => intStringHT.Remove(9999));
+        Assert.AreEqual("Four", intStringBST.Remove(4));
+        Assert.AreEqual(4, intStringBST.Count);
+        Assert.AreEqual("Zero", intStringBST.Remove(0));
+        Assert.AreEqual(3, intStringBST.Count);
+        Assert.Throws<ApplicationException>(() => intStringBST.Remove(9999));
 
-        Assert.AreEqual("One", intStringHT.Get(1));
-        Assert.AreEqual("Two", intStringHT.Get(2));
-        Assert.AreEqual("Three", intStringHT.Get(3));
-        Assert.Throws<ApplicationException>(() => intStringHT.Get(0));
-        Assert.Throws<ApplicationException>(() => intStringHT.Get(4));
+        Assert.AreEqual("One", intStringBST.Get(1));
+        Assert.AreEqual("Two", intStringBST.Get(2));
+        Assert.AreEqual("Three", intStringBST.Get(3));
+        Assert.Throws<ApplicationException>(() => intStringBST.Get(0));
+        Assert.Throws<ApplicationException>(() => intStringBST.Get(4));
     }
 
     [Test]
@@ -193,6 +200,30 @@ public class ChainingBSTTests
 
         // Once we're done, we should have found every SIN:
         Assert.AreEqual(0, alSINS.Count);
+    }
+    [Test]
+    public void TestToString()
+    {
+        ChainingBST<int, Person> cht = new ChainingBST<int, Person>();
+        Array_List<Person> alPeople = new Array_List<Person>();
+        alPeople.Add(new Person(111, "Ada", "Ace", "ada.ace@gmail.com"));
+        alPeople.Add(new Person(222, "Bill", "Bee", "bill.bee@gmail.com"));
+        alPeople.Add(new Person(333, "Cat", "Cee", "cat.cee@gmail.com"));
+        alPeople.Add(new Person(444, "Dirk", "Dee", "dirk.dee@outlook.com"));
+        alPeople.Add(new Person(555, "Ed", "Eee", "ed.eee@saskpolytech.ca"));
+        alPeople.Add(new Person(666, "Fred", "Fee", "Fred.Fee@gmail.com"));
+        Array_List<int> alSINS = new Array_List<int>();
+        foreach (Person person in alPeople)
+        {
+            cht.Add(person.SIN, person);
+            alSINS.Add(person.SIN);
+        }
+        String sResult = cht.ToString();
+        Assert.AreEqual("[Key: 111 Value: Ace, Ada (111)], [Key: 222 Value: Bee, Bill (222)], [Key: 333 Value: Cee, Cat (333)], [Key: 444 Value: Dee, Dirk (444)], [Key: 555 Value: Eee, Ed (555)], [Key: 666 Value: Fee, Fred (666)], [empty], [empty], [empty], ", sResult);
+        cht.Remove(111);
+        sResult = cht.ToString();
+        Assert.AreEqual("[empty], [Key: 222 Value: Bee, Bill (222)], [Key: 333 Value: Cee, Cat (333)], [Key: 444 Value: Dee, Dirk (444)], [Key: 555 Value: Eee, Ed (555)], [Key: 666 Value: Fee, Fred (666)], [empty], [empty], [empty], ", sResult);
+
     }
 }
 

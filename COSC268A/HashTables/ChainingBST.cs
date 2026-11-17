@@ -1,5 +1,6 @@
 ﻿using BinarySearchTrees;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace HashTables
@@ -17,6 +18,10 @@ namespace HashTables
         public ChainingBST()
         {
             oDataArray = new object[iInitialSize];
+        }
+        public int getBucketCount()
+        {
+            return iBucketCount;
         }
 
 
@@ -103,10 +108,10 @@ namespace HashTables
             // Go through everything in the old table array and add it to the hashtable again:
             for (int i = 0; i < oOldDataArray.Length; i++)
             {
-                // Check if there's an arraylist in that slot:
+                // Check if there's an BST in that slot:
                 if (oOldDataArray[i] != null)
                 {
-                    // If there is an Array_list, I'll grab it, cast it, and go through it:
+                    // If there is an BST, I'll grab it, cast it, and go through it:
                     BST<KeyValue<K, V>> alCurrent = (BST<KeyValue<K, V>>)oOldDataArray[i];
                     foreach (KeyValue<K, V> kv in alCurrent)
                     {
@@ -131,17 +136,17 @@ namespace HashTables
             // We'll grab the hash location where in the table we should look
             int iHash = HashFunction(key);
 
-            // We'll grab the ArrayList from that slot in the table
+            // We'll grab the BST from that slot in the table
             BST<KeyValue<K, V>> bstCurrent = (BST<KeyValue<K, V>>)oDataArray[iHash];
 
-            // It may or may not be in that array list, so we may want to keep track
-            // of whether we find it in the arraylist
+            // It may or may not be in that BST, so we may want to keep track
+            // of whether we find it in the BST
             KeyValue<K, V> bKeyFound = new KeyValue<K, V>(key, default(V));
 
-            // If the arraylist isn't null (so that bucket in the hashtable wasn't empty)
+            // If the BST isn't null (so that bucket in the hashtable wasn't empty)
             if (bstCurrent != null)
             {
-                // Search through the arraylist for the KeyValue pair where
+                // Search through the BST for the KeyValue pair where
                 // the key matches the key we are looking for
                 bKeyFound = bstCurrent.Find(new KeyValue<K, V>(key, default(V)));
             }
@@ -157,15 +162,164 @@ namespace HashTables
             // Otherwise, return the Value corresponding to the key
             return bKeyFound.Value;
         }
+        public override string ToString()
+        {
+            int index = 0;
+            BST<KeyValue<K, V>> bucket = null;
+            string sReturn = "";
+
+
+            // We will iterate through the whole table and if we hit a bucket we will call the
+            // bst iterator with our AddToString function to process the data we find
+            while (index < this.oDataArray.Length - 1)
+            {
+                index++;
+                if (this.oDataArray[index] is not null)
+                {
+                    bucket = (BST<KeyValue<K, V>>)this.oDataArray[index];
+                    sReturn += "[";
+                    bucket.Iterate(AddToString, TRAVERSALORDER.IN_ORDER);
+                    sReturn += "], ";
+                }
+                else
+                {
+                    sReturn += "[empty], ";
+                }
+            }
+            return sReturn;
+            // bucket.Iterate will give us KeyValue<K, V> data to process
+            void AddToString(KeyValue<K, V> kv)
+            {
+                sReturn += "Key: " + kv.Key.ToString() + " Value: " + kv.Value.ToString();
+            }
+
+        }
 
         public override IEnumerator<V> GetEnumerator()
         {
-            throw new NotImplementedException();
+            return new ChainingBSTEnumerator(this);
+        }
+
+        private class ChainingBSTEnumerator : IEnumerator<V>
+        {
+            private ChainingBST<K, V> table;
+            // Every bucket in the table contains a BST so we must keep a variable for the current bucket
+            private BST<KeyValue<K, V>> bucket;
+            // We will be using the BST Enumerator to enumerate the buckets when we hit one
+            private IEnumerator<KeyValue<K, V>> bucketEnum;
+
+            // Keep a reference to the indexes we've most recently visited:
+            private int index;
+
+
+            public ChainingBSTEnumerator(ChainingBST<K, V> table)
+            {
+                this.table = table;
+                Reset();
+            }
+
+            public V Current
+            {
+                get
+                {
+                    return bucketEnum.Current.Value;
+                }
+            }
+
+            object IEnumerator.Current => Current;
+
+            public void Dispose()
+            {
+                table = null;
+                index = -1;
+                bucketEnum = null;
+            }
+
+            public bool MoveNext()
+            {
+                // first check if we are currently inside a bucket
+                if (bucket is not null)
+                {
+                    // if the bucket is able to move we will return true
+                    if (bucketEnum.MoveNext())
+                    {
+                        return true;
+                    }
+                    // bucket has been fully traversed we must set it to null
+                    else
+                    {
+                        bucket = null;
+                    }
+                }
+
+                // then check if the table has been fully traversed. if it hasn't been then advance until we hit another bucket
+                // or we go off the edge. 
+                while (index < table.oDataArray.Length - 1 && bucket is null)
+                {
+                    index++;
+                    // check if there is a bucket
+                    // if there is then initialize the enum and return true
+                    if (table.oDataArray[index] is not null)
+                    {
+                        bucket = (BST<KeyValue<K, V>>)table.oDataArray[index];
+                        bucketEnum = bucket.GetEnumerator();
+                        bucketEnum.Reset();
+                        bucketEnum.MoveNext();
+                        return true;
+                    }
+                }
+
+                // We made it to the end of the table
+                return false;
+            }
+
+            // reset variables so we can enumerate the table again
+            public void Reset()
+            {
+                index = -1;
+                bucketEnum = null;
+                bucket = null;
+            }
         }
 
         public override V Remove(K key)
         {
-            throw new NotImplementedException();
+            // We'll grab the hash location where in the table we should look
+            int iHash = HashFunction(key);
+
+            // We'll grab the BST from that slot in the table
+            BST<KeyValue<K, V>> bstCurrent = (BST<KeyValue<K, V>>)oDataArray[iHash];
+
+            // It may or may not be in that BST, so we may want to keep track
+            // of whether we find it in the BST
+            KeyValue<K, V> bKeyFound = new KeyValue<K, V>(key, default(V));
+
+            // If the BST isn't null (so that bucket in the hashtable wasn't empty)
+            if (bstCurrent != null)
+            {
+                // Search through the BST for the KeyValue pair where
+                // the key matches the key we are looking for
+                bKeyFound = bstCurrent.Find(new KeyValue<K, V>(key, default(V)));
+            }
+            // If we haven't found the KeyValue pair we're looking for, throw
+            // an ApplicationException to say not found
+            if (bKeyFound.Value is null)
+            {
+                throw new ApplicationException("Could not find key " + key + " in hashtable.");
+            }
+
+            // Remove the kv from the BST then check if the BST has any more elements
+            // if it doesn't set the location to null and decrease bucketCount
+            bstCurrent.Remove(bKeyFound);
+            iCount--;
+            if (bstCurrent.Count == 0)
+            {
+                oDataArray[iHash] = null;
+                iBucketCount--;
+            }
+
+            // Otherwise, return the Value corresponding to the key
+            return bKeyFound.Value;
         }
     }
 }

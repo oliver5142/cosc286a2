@@ -120,10 +120,17 @@ public abstract class A_OpenAddressing<K, V> : A_HashTable<K, V> where K : IComp
         int iAttempts = 1;
         // Keep track of whether or not we've found it:
         bool bFound = false;
+        // set intitial tombstone location out of bounds
+        int tombstoneLocation = -1;
 
         // Keep looping until either we find the tiem or we hit a null:
         while (!bFound && oDataArray[iCurrentLocation] != null)
         {
+            //check if the spot we are checking is a tombstone, if it is and we haven't recorded a tombtone location yet then we will store it
+            if (oDataArray[iCurrentLocation].GetType() == typeof(Tombstone) && tombstoneLocation == -1)
+            {
+                tombstoneLocation = iCurrentLocation;
+            }
             if (oDataArray[iCurrentLocation].GetType() == typeof(KeyValue<K, V>))
             {
                 KeyValue<K, V> kv = (KeyValue<K, V>)oDataArray[iCurrentLocation];
@@ -131,6 +138,13 @@ public abstract class A_OpenAddressing<K, V> : A_HashTable<K, V> where K : IComp
                 {
                     // If the keys match we've found the item:
                     vReturn = kv.Value;
+                    // if we've recorded a tombstoneLocation than we will set that to be the kv we just found
+                    if (tombstoneLocation != -1)
+                    {
+                        oDataArray[tombstoneLocation] = kv;
+                        oDataArray[iCurrentLocation] = new Tombstone();
+                    }
+
                     bFound = true;
                 }
             }
